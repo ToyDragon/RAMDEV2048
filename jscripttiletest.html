@@ -1,0 +1,286 @@
+<html>
+	<style>
+		.text{
+			text-align       : center;
+			font-size        : 36;
+			font-family      : "Times New Roman",Georgia,Serif;
+			margin           : auto;
+		}
+		.tile{
+			width            : 96px;
+			height           : 96px;
+			position         : absolute;
+			z-index          : 2;
+			line-height      : 96px;
+		}
+		#board{
+			width            : 429;
+			height           : 429;
+			background-color : #33253B;
+			z-index          : 0;
+			margin-left      : auto;
+			margin-right     : auto;
+			margin-top       : 125;
+			position         : relative;
+		}
+	</style>
+	<head>
+		<div style="width:100%">
+			<div class="text" style="margin-left:auto;margin-right:auto">
+				<div style="float:left;">Score:&nbsp;</div>
+				<div style="float:left;" id="score">0</div>
+			</div>
+			<br/>
+		</div>
+		<div id="board"></div>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+		<script>
+			var score = 0;
+			var colors = ["#C3EB0B","#64F566","#08EDA0","#E4422D"];
+			var tiles = [[null,null,null,null],
+			             [null,null,null,null],
+			             [null,null,null,null],
+			             [null,null,null,null]];
+			var canMerge = [[true,true,true,true],
+			                [true,true,true,true],
+			                [true,true,true,true],
+			                [true,true,true,true]];
+			var acceptInput = true;
+			function shift(dir){
+				if(!acceptInput)return;
+				acceptInput = false;
+				canMerge = [[true,true,true,true],
+				            [true,true,true,true],
+				            [true,true,true,true],
+				            [true,true,true,true]];
+				var validMove = false;
+				if(dir==="left"){
+					for(var y = 0; y < 4; y++){
+						for(var x = 0; x < 4; x++){
+							if(tiles[y][x]==null)continue;
+							//try to move tile at x,y to as far left as possible
+							for(var x2 = 0; x2 < x; x2++){
+								if(tiles[y][x2]==null){
+									moveTile(tiles[y][x],x2,y);
+									validMove=true;
+									break;
+								}
+								//if it is, try to merge with it
+								else if(tiles[y][x2].val == tiles[y][x].val){
+									var tileBetween = false;
+									//check for tiles inbetween
+									for(var x3 = x2+1; x3 < x; x3++){
+										if(tiles[y][x3])tileBetween=true;
+									}
+									if(!tileBetween && canMerge[y][x2]){
+										mergeTiles(tiles[y][x],tiles[y][x2]);
+										validMove=true;
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+				if(dir==="right"){
+					for(var y = 0; y < 4; y++){
+						for(var x = 3; x >= 0; x--){
+							if(tiles[y][x]==null)continue;
+							//try to move tile at x,y to as far left as possible
+							for(var x2 = 3; x2 > x; x2--){
+								if(tiles[y][x2]==null){
+									moveTile(tiles[y][x],x2,y);
+									validMove=true;
+									break;
+								}
+								//if it is, try to merge with it
+								else if(tiles[y][x2].val == tiles[y][x].val){
+									var tileBetween = false;
+									//check for tiles inbetween
+									for(var x3 = x2-1; x3 > x; x3--){
+										if(tiles[y][x3])tileBetween=true;
+									}
+									if(!tileBetween && canMerge[y][x2]){
+										mergeTiles(tiles[y][x],tiles[y][x2]);
+										validMove=true;
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+				if(dir==="up"){
+					for(var y = 0; y < 4; y++){
+						for(var x = 0; x < 4; x++){
+							if(tiles[y][x]==null)continue;
+							//try to move tile at x,y to as far up as possible
+							for(var y2 = 0; y2 < y; y2++){
+								//if the tile isn't occupied, move to it
+								if(tiles[y2][x]==null){
+									moveTile(tiles[y][x],x,y2);
+									validMove=true;
+									break;
+								}
+								//if it is, try to merge with it
+								else if(tiles[y2][x].val == tiles[y][x].val){
+									var tileBetween = false;
+									//check for tiles inbetween
+									for(var y3 = y2+1; y3 < y; y3++){
+										if(tiles[y3][x])tileBetween=true;
+									}
+									if(!tileBetween && canMerge[y2][x]){
+										mergeTiles(tiles[y][x],tiles[y2][x]);
+										validMove=true;
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+				if(dir==="down"){
+					for(var y = 3; y >= 0; y--){
+						for(var x = 0; x < 4; x++){
+							if(tiles[y][x]==null)continue;
+							//try to move tile at x,y to as far up as possible
+							for(var y2 = 3; y2 > y; y2--){
+								//if the tile isn't occupied, move to it
+								if(tiles[y2][x]==null){
+									moveTile(tiles[y][x],x,y2);
+									validMove=true;
+									break;
+								}
+								//if it is, try to merge with it
+								else if(tiles[y2][x].val == tiles[y][x].val){
+									var tileBetween = false;
+									//check for tiles inbetween
+									for(var y3 = y2-1; y3 > y; y3--){
+										if(tiles[y3][x])tileBetween=true;
+									}
+									if(!tileBetween && canMerge[y2][x]){
+										mergeTiles(tiles[y][x],tiles[y2][x]);
+										validMove=true;
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+				if(checkLose()){
+					alert("you blow loser!");
+				}else{
+					if(validMove){
+						setTimeout(function(){
+							acceptInput=true;
+							newRandomTile();
+						},200);
+					}else{
+						acceptInput=true;
+					}
+				}
+			}
+			function moveTile(tile, nx, ny){
+				tiles[ny][nx] = tile;
+				tile.animate(
+					{//animation params
+						top:ny*106 + 8,
+						left:nx*106 + 8
+					},
+					50*Math.abs((nx-tile.x)+(ny-tile.y))//animation time
+				);
+				tiles[tile.y][tile.x] = null;
+				tile.y = ny;
+				tile.x = nx;
+			}
+			function mergeTiles(tile1,tile2){
+				tile1.css("z-index",1);
+				canMerge[tile2.y][tile2.x] = false;
+				tile2.val*=2;
+				score+=tile2.val;
+				updateValue(tile2);
+				tiles[tile1.y][tile1.x] = null;
+				tile1.animate(
+					{//animation params
+						top:tile2.y*106 + 8,
+						left:tile2.x*106 + 8
+					},
+					50*Math.abs((tile2.x-tile1.x)+(tile2.y-tile1.y)),//animation time
+					"swing",//animation style
+					function(){//animation finish
+						tile1.remove();
+					}
+				);
+				$("#score").text(""+score);
+			}
+			function checkLose(){
+				for(var y = 0; y < 4; y++){
+					for(var x = 0; x < 4; x++){
+						if(!tiles[y][x])return false;
+						for(var ym = -1; ym <= 1; ym++){
+							for(var xm = -1; xm <= 1; xm++){
+								if(y + ym >= 0 && y + ym <= 3
+								&& x + xm >= 0 && x + xm <= 3
+								&& tiles[y][x] && tiles[y+ym][x+xm]
+								&& tiles[y][x].val == tiles[y+ym][x+xm].val)return false
+							}
+						}
+					}
+				}return true;
+			}
+			function newRandomTile(){
+				var val = (Math.random()>.5)?2:4;
+				var x = Math.floor(Math.random()*4);
+				var y = Math.floor(Math.random()*4);
+				while(tiles[y][x]){
+					x = Math.floor(Math.random()*4);
+					y = Math.floor(Math.random()*4);
+				}
+				newTile(x,y,val);
+			}
+			function updateValue(tile){
+				tile.text(""+tile.val);
+				updateColor(tile);
+			}
+			function updateColor(tile){
+				tile.color = log2(tile.val)-1;
+				tile.css("background-color",colors[tile.color % colors.length]);
+			}
+			function updatePosition(tile){
+				tile.css("top", tile.y*106 + 8);
+				tile.css("left", tile.x*106 + 8);
+				updateColor(tile);
+			}
+			function newTile(x,y,val){
+				var newTile = $("<div>");
+				newTile.addClass("tile").addClass("text");
+				newTile.text(""+val);
+				newTile.x = x;
+				newTile.y = y;
+				newTile.val = val;
+				updatePosition(newTile);
+				$("#board").append(newTile);
+				tiles[y][x] = newTile;
+			}
+			function log2(x){
+				var v = 0;
+				while(x>1){
+					x/=2;
+					v++;
+				}
+				return v;
+			}
+			$(document).ready(function(){
+				newRandomTile();
+				newRandomTile();
+				$(document).keydown(function(event){
+					if(event.which == 37) shift("left");
+					if(event.which == 38) shift("up");
+					if(event.which == 39) shift("right");
+					if(event.which == 40) shift("down");
+				});
+			});
+		</script>
+	</head>
+</html>
